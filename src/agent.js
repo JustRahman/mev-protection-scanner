@@ -33,11 +33,10 @@ const agent = createAgentApp(
   {
     config: {
       payments: {
-        network: process.env.PAYMENT_NETWORK || 'base',
-        amount: process.env.PAYMENT_AMOUNT || '0.10',
-        currency: process.env.PAYMENT_CURRENCY || 'USDC',
         facilitatorUrl: process.env.FACILITATOR_URL || 'https://facilitator.daydreams.systems',
-        payToWallet: process.env.PAY_TO_WALLET || '0x992920386E3D950BC260f99C81FDA12419eD4594'
+        payTo: process.env.PAY_TO_WALLET || '0x992920386E3D950BC260f99C81FDA12419eD4594',
+        network: process.env.PAYMENT_NETWORK || 'base',
+        defaultPrice: process.env.PAYMENT_AMOUNT || '0.10'
       }
     },
     useConfigPayments: true
