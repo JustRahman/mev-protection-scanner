@@ -5,10 +5,11 @@
   "description": "AI agent that detects MEV attacks on pending transactions",
   "main": "src/agent.js",
   "scripts": {
-    "start": "node server-enhanced.js",
+    "start": "node src/index.js",
     "start:basic": "node server.js",
+    "start:enhanced": "node server-enhanced.js",
     "start:agent": "node src/agent.js",
-    "dev": "node --watch server-enhanced.js",
+    "dev": "node --watch src/index.js",
     "test": "node test-scan.js",
     "db:init": "node src/database/init.js"
   },
@@ -22,6 +23,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@hono/node-server": "^1.19.5",
     "@lucid-dreams/agent-kit": "^0.2.22",
     "better-sqlite3": "^9.2.2",
     "dotenv": "^16.3.1",

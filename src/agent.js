@@ -23,34 +23,28 @@ dotenv.config();
 // Initialize database
 initDatabase();
 
-// Create agent app
-const agent = createAgentApp({
-  name: 'mev-protection-scanner',
-  version: '1.0.0',
-  description: 'Detect MEV attacks (sandwich, front-running) and provide protection recommendations for DeFi transactions',
-  payments: {
-    enabled: true,
-    network: 'base',
-    amount: process.env.PAYMENT_AMOUNT || '0.10',
-    currency: process.env.PAYMENT_CURRENCY || 'USDC',
-    facilitatorUrl: process.env.FACILITATOR_URL || 'https://facilitator.daydreams.systems',
-    payToWallet: process.env.PAY_TO_WALLET || '0x992920386E3D950BC260f99C81FDA12419eD4594'
+// Create agent app (using agent-kit two-parameter format like bridge-route-pinger)
+const agent = createAgentApp(
+  {
+    name: 'mev-protection-scanner',
+    version: '1.0.0',
+    description: 'Detect MEV attacks (sandwich, front-running) and provide protection recommendations for DeFi transactions'
+  },
+  {
+    config: {
+      payments: {
+        network: process.env.PAYMENT_NETWORK || 'base',
+        amount: process.env.PAYMENT_AMOUNT || '0.10',
+        currency: process.env.PAYMENT_CURRENCY || 'USDC',
+        facilitatorUrl: process.env.FACILITATOR_URL || 'https://facilitator.daydreams.systems',
+        payToWallet: process.env.PAY_TO_WALLET || '0x992920386E3D950BC260f99C81FDA12419eD4594'
+      }
+    },
+    useConfigPayments: true
   }
-});
+);
 
-const { app, addEntrypoint } = agent;
-
-// Health check endpoint (if Express app is available)
-if (app && typeof app.get === 'function') {
-  app.get('/health', (req, res) => {
-    res.json({
-      status: 'healthy',
-      uptime: process.uptime(),
-      timestamp: Date.now(),
-      version: '1.0.0'
-    });
-  });
-}
+const { addEntrypoint } = agent;
 
 // Main MEV scan entrypoint
 addEntrypoint({
@@ -257,22 +251,5 @@ function calculateOverallConfidence(sandwichRisk, frontRunRisk) {
   return Math.round(avgConfidence * 100) / 100;
 }
 
-// Start the server if app has listen method
-const PORT = process.env.PORT || 3000;
-
-// Agent-kit handles the server startup internally
-// Just log that we're ready
-console.log('🚀 MEV Protection Scanner initialized');
-console.log('📡 Agent name: mev-protection-scanner');
-console.log('🔐 X402 payments enabled on Base network');
-console.log('💰 Price per scan: $' + (process.env.PAYMENT_AMOUNT || '0.10'));
-
-// If running as a standalone server (not via agent-kit CLI)
-if (app && typeof app.listen === 'function') {
-  app.listen(PORT, () => {
-    console.log('🚀 Server running on port', PORT);
-    console.log('📡 Health check: http://localhost:' + PORT + '/health');
-  });
-}
-
+// Export the agent (server startup handled by src/index.js)
 export default agent;

@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { z } from 'zod';
+import fetch from 'node-fetch';
 
 // Import ENHANCED services with real blockchain data
 import { getRealMempoolData, getGasPrice, getWebSocketStatus, initWebSocketMempoolService } from './src/services/mempool-enhanced.js';
@@ -35,6 +36,93 @@ app.use(express.json());
 
 // Enable detailed logging
 const VERBOSE = process.env.VERBOSE === 'true';
+
+// X402 Payment Configuration
+const PAYMENT_CONFIG = {
+  wallet: process.env.PAY_TO_WALLET,
+  facilitator: process.env.FACILITATOR_URL,
+  network: process.env.PAYMENT_NETWORK || 'base',
+  amount: process.env.PAYMENT_AMOUNT || '0.10',
+  currency: process.env.PAYMENT_CURRENCY || 'USDC'
+};
+
+// X402 standard response format (matching bridge-route-pinger format)
+function getX402Response(req) {
+  // Build full resource URL dynamically from request
+  const resourceUrl = `${req.protocol}://${req.get('host')}${req.path}`;
+
+  return {
+    error: 'X-PAYMENT header is required',
+    accepts: [
+      {
+        scheme: 'exact',
+        network: PAYMENT_CONFIG.network,
+        maxAmountRequired: '100000', // 0.10 USDC (6 decimals)
+        resource: resourceUrl, // Full URL: http://localhost:3000/api/v1/scan_transaction
+        description: 'MEV Protection Scanner - Detect sandwich attacks and front-running',
+        mimeType: 'application/json',
+        payTo: PAYMENT_CONFIG.wallet,
+        maxTimeoutSeconds: 300,
+        asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' // USDC contract on Base
+      }
+    ],
+    x402Version: 1 // Number, not string
+  };
+}
+
+/**
+ * X402 Payment Verification Middleware
+ * Verifies payment header with facilitator before allowing access
+ */
+async function verifyX402Payment(req, res, next) {
+  const paymentHeader = req.headers['x-payment'];
+
+  // Check if payment header exists
+  if (!paymentHeader) {
+    console.log('❌ Payment required - No X-PAYMENT header found');
+    return res.status(402).json(getX402Response(req));
+  }
+
+  // Verify payment with facilitator
+  try {
+    console.log('🔍 Verifying payment with facilitator...');
+    console.log('   Payment header:', paymentHeader.substring(0, 50) + '...');
+    const verifyUrl = `${PAYMENT_CONFIG.facilitator}/verify`;
+    console.log('   Facilitator URL:', verifyUrl);
+
+    // Facilitator only needs the payment header, not additional metadata
+    const response = await fetch(verifyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-PAYMENT': paymentHeader
+      }
+    });
+
+    console.log('   Facilitator response status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.log('❌ Payment verification failed:', response.status);
+      console.log('   Error response:', errorText);
+      return res.status(402).json(getX402Response(req));
+    }
+
+    const verificationResult = await response.json();
+
+    if (!verificationResult.valid) {
+      console.log('❌ Invalid payment:', verificationResult.message);
+      return res.status(402).json(getX402Response(req));
+    }
+
+    console.log('✅ Payment verified successfully');
+    next();
+
+  } catch (error) {
+    console.error('❌ Payment verification error:', error.message);
+    return res.status(402).json(getX402Response(req));
+  }
+}
 
 // Request validation schema
 const scanRequestSchema = z.object({
@@ -98,8 +186,8 @@ app.get('/api/v1/pool/:tokenIn/:tokenOut', async (req, res) => {
   }
 });
 
-// ENHANCED Main scan endpoint with real blockchain data
-app.post('/api/v1/scan_transaction', async (req, res) => {
+// ENHANCED Main scan endpoint with real blockchain data (X402 Payment Required)
+app.post('/api/v1/scan_transaction', verifyX402Payment, async (req, res) => {
   const startTime = Date.now();
 
   try {
@@ -455,7 +543,16 @@ app.listen(PORT, () => {
   console.log('  - Multi-source gas oracle');
   console.log('  - Mempool congestion analysis');
   console.log('');
-  console.log('💰 Payment: $0.10 per scan (USDC on Base)');
+  console.log('💰 X402 PAYMENT REQUIRED:');
+  console.log(`  Amount: ${PAYMENT_CONFIG.amount} ${PAYMENT_CONFIG.currency}`);
+  console.log(`  Network: ${PAYMENT_CONFIG.network}`);
+  console.log(`  Wallet: ${PAYMENT_CONFIG.wallet}`);
+  console.log(`  Facilitator: ${PAYMENT_CONFIG.facilitator}`);
+  console.log('  Header: X-PAYMENT (required for /api/v1/scan_transaction)');
+  console.log('');
+  console.log('🆓 FREE ENDPOINTS:');
+  console.log('  - GET /health');
+  console.log('  - GET /api/v1/gas_price');
   console.log('');
   console.log('Ready to protect transactions from MEV attacks! 🛡️');
 });
