@@ -1,0 +1,57 @@
+mev-protection-scanner/
+├── src/
+│   ├── agent.js                 # Main agent-kit application with X402 payments
+│   ├── detectors/
+│   │   ├── sandwich.js          # Sandwich attack detection algorithm
+│   │   ├── frontrun.js          # Front-running detection algorithm
+│   │   └── historical.js        # Historical pattern analysis
+│   ├── services/
+│   │   ├── mempool.js           # Mempool data fetching (Blocknative/Etherscan)
+│   │   └── protection.js        # Protection recommendations generator
+│   ├── database/
+│   │   ├── init.js              # SQLite database initialization
+│   │   └── queries.js           # Database query functions
+│   └── utils/
+│       ├── gas.js               # Gas price calculations
+│       └── calculations.js      # Risk score and loss estimation
+├── data/
+│   └── mev_attacks.db           # SQLite database (created on init)
+├── package.json                 # Node.js dependencies
+├── .env                         # Environment variables (API keys)
+├── .env.example                 # Example environment configuration
+├── .gitignore                   # Git ignore rules
+├── README.md                    # Full documentation
+├── QUICKSTART.md                # 5-minute setup guide
+├── EXAMPLES.md                  # Usage examples and integrations
+├── LICENSE                      # MIT License
+├── railway.json                 # Railway deployment configuration
+├── test-scan.js                 # Test script to verify functionality
+└── mev-scanner-spec.md          # Original specification document
+
+Key Files:
+---------
+✅ src/agent.js              - Main application entry point
+✅ src/detectors/sandwich.js - Core sandwich attack detection  
+✅ src/detectors/frontrun.js - Front-running detection
+✅ src/services/protection.js - Protection recommendations
+✅ package.json              - Dependencies and scripts
+✅ README.md                 - Complete documentation
+✅ test-scan.js              - Working test cases
+
+npm scripts:
+-----------
+npm start       - Start the production server
+npm run dev     - Start with auto-reload (development)
+npm run db:init - Initialize SQLite database
+npm test        - Run tests
+
+API Endpoint:
+------------
+POST /api/v1/scan_transaction
+  - Detects MEV attacks
+  - Returns risk score and protection suggestions
+  - X402 payment: $0.10/scan (USDC on Base)
+
+GET /health
+  - Health check endpoint
+  - Returns server status
