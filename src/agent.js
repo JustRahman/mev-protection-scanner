@@ -24,23 +24,31 @@ dotenv.config();
 initDatabase();
 
 // Create agent app (using agent-kit two-parameter format like bridge-route-pinger)
+// Check if payment should be enabled
+const enablePayment = process.env.ENABLE_PAYMENTS === 'true';
+
+// Create config based on payment setting
+const agentConfig = enablePayment
+  ? {
+      config: {
+        payments: {
+          facilitatorUrl: process.env.FACILITATOR_URL || 'https://facilitator.daydreams.systems',
+          payTo: process.env.PAY_TO_WALLET || '0x992920386E3D950BC260f99C81FDA12419eD4594',
+          network: process.env.PAYMENT_NETWORK || 'base',
+          defaultPrice: process.env.PAYMENT_AMOUNT || '0.10'
+        }
+      },
+      useConfigPayments: true
+    }
+  : {}; // No payment config when disabled
+
 const agent = createAgentApp(
   {
     name: 'mev-protection-scanner',
     version: '1.0.0',
     description: 'Detect MEV attacks (sandwich, front-running) and provide protection recommendations for DeFi transactions'
   },
-  {
-    config: {
-      payments: {
-        facilitatorUrl: process.env.FACILITATOR_URL || 'https://facilitator.daydreams.systems',
-        payTo: process.env.PAY_TO_WALLET || '0x992920386E3D950BC260f99C81FDA12419eD4594',
-        network: process.env.PAYMENT_NETWORK || 'base',
-        defaultPrice: process.env.PAYMENT_AMOUNT || '0.10'
-      }
-    },
-    useConfigPayments: true
-  }
+  agentConfig
 );
 
 const { addEntrypoint } = agent;

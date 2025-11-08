@@ -10,13 +10,17 @@ console.log('');
 console.log('📡 Agent name: mev-protection-scanner');
 console.log('📦 Version: 1.0.0');
 console.log('');
-console.log('💰 X402 Payment Configuration:');
-console.log(`   Network: ${process.env.PAYMENT_NETWORK || 'base'}`);
-console.log(`   Amount: ${process.env.PAYMENT_AMOUNT || '0.10'} ${process.env.PAYMENT_CURRENCY || 'USDC'}`);
-console.log(`   Wallet: ${process.env.PAY_TO_WALLET || '0x992920386E3D950BC260f99C81FDA12419eD4594'}`);
-console.log(`   Facilitator: ${process.env.FACILITATOR_URL || 'https://facilitator.daydreams.systems'}`);
-console.log('');
-console.log('✅ X402 payments handled automatically by @lucid-dreams/agent-kit');
+if (process.env.ENABLE_PAYMENTS === 'true') {
+  console.log('💰 X402 Payment Configuration:');
+  console.log(`   Network: ${process.env.PAYMENT_NETWORK || 'base'}`);
+  console.log(`   Amount: ${process.env.PAYMENT_AMOUNT || '0.10'} ${process.env.PAYMENT_CURRENCY || 'USDC'}`);
+  console.log(`   Wallet: ${process.env.PAY_TO_WALLET || '0x992920386E3D950BC260f99C81FDA12419eD4594'}`);
+  console.log(`   Facilitator: ${process.env.FACILITATOR_URL || 'https://facilitator.daydreams.systems'}`);
+  console.log('');
+  console.log('✅ X402 payments handled automatically by @lucid-dreams/agent-kit');
+} else {
+  console.log('🆓 X402 Payments: DISABLED (Free access for testing)');
+}
 console.log('');
 console.log('🚀 Starting server...');
 

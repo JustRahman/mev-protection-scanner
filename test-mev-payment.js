@@ -3,7 +3,7 @@ import { wrapFetchWithPayment } from 'x402-fetch';
 import fetch from 'node-fetch';
 
 const PRIVATE_KEY = "0x92f597b036614b50eefe4d029b9756f5370bb41fcc1b814e4c28494a0033a0f2";
-const API_URL = "http://localhost:3000";
+const API_URL = "https://mev-protection-scanner-production.up.railway.app";
 const NETWORK = "base";
 
 async function testWithWrappedFetch() {
